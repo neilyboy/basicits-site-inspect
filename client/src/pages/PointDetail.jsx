@@ -336,6 +336,8 @@ export default function PointDetail() {
                   onChange={(e) => setEditForm({ ...editForm, cable_type: e.target.value })}
                 >
                   <option value="">— None / Existing —</option>
+                  <option value="18/2 Access Control">18/2 Access Control</option>
+                  <option value="22/4 Access Control">22/4 Access Control</option>
                   <option value="Cat5e">Cat5e</option>
                   <option value="Cat6">Cat6</option>
                   <option value="Cat6A">Cat6A</option>
