@@ -8,6 +8,7 @@ import AddPoint from './pages/AddPoint';
 import PointDetail from './pages/PointDetail';
 import PhotoAnnotate from './pages/PhotoAnnotate';
 import SiteReport from './pages/SiteReport';
+import ArchiveManager from './pages/ArchiveManager';
 
 export default function App() {
   return (
@@ -19,6 +20,7 @@ export default function App() {
         <Route path="/sites/:siteId/edit" element={<EditSite />} />
         <Route path="/sites/:siteId/add" element={<AddPoint />} />
         <Route path="/sites/:siteId/points/:pointId" element={<PointDetail />} />
+        <Route path="/archive" element={<ArchiveManager />} />
       </Route>
       <Route path="/sites/:siteId/photos/:photoId/annotate" element={<PhotoAnnotate />} />
       <Route path="/sites/:siteId/report" element={<SiteReport />} />

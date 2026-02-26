@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { Home, Plus, Sun, Moon } from 'lucide-react';
+import { Home, Plus, Sun, Moon, Archive } from 'lucide-react';
 import { useDarkMode } from '../context/DarkModeContext';
 
 export default function BottomNav() {
@@ -28,6 +28,20 @@ export default function BottomNav() {
           className="bg-blue-600 text-white -mt-6 w-14 h-14 rounded-full shadow-lg shadow-blue-500/30 flex items-center justify-center active:scale-95 transition-all"
         >
           <Plus size={26} />
+        </NavLink>
+
+        <NavLink
+          to="/archive"
+          className={({ isActive }) =>
+            `flex flex-col items-center justify-center gap-0.5 px-5 py-1 rounded-xl transition-all ${
+              isActive
+                ? 'text-blue-600 dark:text-blue-400'
+                : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400'
+            }`
+          }
+        >
+          <Archive size={22} />
+          <span className="text-[10px] font-semibold tracking-wide">Archive</span>
         </NavLink>
 
         <button
