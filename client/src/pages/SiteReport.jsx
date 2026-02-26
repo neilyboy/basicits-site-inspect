@@ -269,6 +269,93 @@ export default function SiteReport() {
           </div>
         )}
 
+        {/* Equipment Quote Summary */}
+        {(() => {
+          // Build model qty map and accessories qty map from all points
+          const modelQty = {};   // { 'CD43 — Indoor Dome (4MP)': { model, category, count } }
+          const accQty = {};     // { 'ACC-MNT-PEND-1 — Pendant Mount': count }
+
+          for (const p of points) {
+            if (p.product_model && p.product_model !== '__other__') {
+              const key = `${p.category}::${p.product_model}`;
+              if (!modelQty[key]) {
+                const cat = getCategoryById(p.category);
+                modelQty[key] = { model: p.product_model, categoryName: cat?.name || p.category, count: 0 };
+              }
+              modelQty[key].count += 1;
+            }
+            if (p.accessories) {
+              const accList = p.accessories.split(', ').filter(Boolean);
+              for (const accId of accList) {
+                accQty[accId] = (accQty[accId] || 0) + 1;
+              }
+            }
+          }
+
+          const modelRows = Object.values(modelQty).sort((a, b) => a.categoryName.localeCompare(b.categoryName));
+          const accRows = Object.entries(accQty).sort((a, b) => a[0].localeCompare(b[0]));
+          if (modelRows.length === 0) return null;
+
+          return (
+            <div className="p-6 border-b-4 border-blue-600 bg-blue-50">
+              <h2 className="text-sm font-bold text-blue-800 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <Tag size={14} /> Equipment Quote Summary
+              </h2>
+
+              {/* Device Models */}
+              <h3 className="text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">Devices / Models</h3>
+              <div className="overflow-x-auto mb-5">
+                <table className="w-full text-sm bg-white rounded-lg overflow-hidden border border-blue-100">
+                  <thead>
+                    <tr className="bg-blue-600 text-white">
+                      <th className="text-left px-4 py-2 font-semibold">Category</th>
+                      <th className="text-left px-4 py-2 font-semibold">Model / SKU</th>
+                      <th className="text-right px-4 py-2 font-semibold">Qty</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {modelRows.map((row, i) => (
+                      <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-blue-50'}>
+                        <td className="px-4 py-2 text-gray-500 text-xs">{row.categoryName}</td>
+                        <td className="px-4 py-2 font-semibold text-gray-800">{row.model}</td>
+                        <td className="px-4 py-2 text-right font-bold text-blue-700">{row.count}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Accessories */}
+              {accRows.length > 0 && (
+                <>
+                  <h3 className="text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">Accessories / Mounts</h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm bg-white rounded-lg overflow-hidden border border-blue-100">
+                      <thead>
+                        <tr className="bg-slate-700 text-white">
+                          <th className="text-left px-4 py-2 font-semibold">Accessory / SKU</th>
+                          <th className="text-right px-4 py-2 font-semibold">Qty</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {accRows.map(([accId, qty], i) => (
+                          <tr key={accId} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                            <td className="px-4 py-2 text-gray-800">{accId}</td>
+                            <td className="px-4 py-2 text-right font-bold text-slate-700">{qty}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
+              <p className="text-xs text-blue-600 mt-3">
+                Quantities reflect devices logged during site survey. Verify final scope before quoting.
+              </p>
+            </div>
+          );
+        })()}
+
         {/* Summary Table */}
         <div className="p-6 border-b border-gray-200">
           <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3">Summary</h2>
@@ -366,9 +453,14 @@ export default function SiteReport() {
                       </p>
                     )}
                     {point.product_model && (
-                      <p className="text-gray-600 flex items-center gap-2">
-                        <Tag size={13} className="text-gray-400 shrink-0" />
-                        Model: {point.product_model}
+                      <p className="text-gray-600 flex items-start gap-2">
+                        <Tag size={13} className="text-gray-400 shrink-0 mt-0.5" />
+                        <span>
+                          <span className="font-medium">Model:</span> {point.product_model}
+                          {point.accessories && (
+                            <span className="text-gray-400"> + {point.accessories}</span>
+                          )}
+                        </span>
                       </p>
                     )}
                     {point.install_difficulty && point.category !== 'network' && (
