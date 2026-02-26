@@ -24,6 +24,29 @@ export default function SiteDetail() {
   const [points, setPoints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [archiving, setArchiving] = useState(false);
+  const [tileLayer, setTileLayer] = useState('street');
+  const tileLayerRef = useRef(null);
+
+  const TILE_LAYERS = {
+    street: {
+      label: 'Street',
+      url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 19,
+    },
+    satellite: {
+      label: 'Satellite',
+      url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      attribution: '© Esri, Maxar, Earthstar Geographics',
+      maxZoom: 19,
+    },
+    topo: {
+      label: 'Topo',
+      url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+      attribution: '© OpenTopoMap contributors',
+      maxZoom: 17,
+    },
+  };
 
   async function handleArchive() {
     setArchiving(true);
@@ -80,9 +103,10 @@ export default function SiteDetail() {
     const map = L.map(mapRef.current, { zoomControl: true }).setView([centerLat, centerLng], 16);
     mapInstanceRef.current = map;
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '\u00a9 OpenStreetMap contributors',
-      maxZoom: 19,
+    const initialLayer = TILE_LAYERS['street'];
+    tileLayerRef.current = L.tileLayer(initialLayer.url, {
+      attribution: initialLayer.attribution,
+      maxZoom: initialLayer.maxZoom,
     }).addTo(map);
 
     if (site.latitude && site.longitude) {
@@ -112,9 +136,21 @@ export default function SiteDetail() {
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
+        tileLayerRef.current = null;
       }
     };
   }, [site, points]);
+
+  useEffect(() => {
+    if (!mapInstanceRef.current || !tileLayerRef.current) return;
+    const cfg = TILE_LAYERS[tileLayer];
+    mapInstanceRef.current.removeLayer(tileLayerRef.current);
+    tileLayerRef.current = L.tileLayer(cfg.url, {
+      attribution: cfg.attribution,
+      maxZoom: cfg.maxZoom,
+    }).addTo(mapInstanceRef.current);
+    tileLayerRef.current.bringToBack();
+  }, [tileLayer]);
 
   async function loadData() {
     try {
@@ -320,30 +356,49 @@ export default function SiteDetail() {
                       <ChevronRight size={18} className="text-gray-300 shrink-0" />
                     </Link>
                   ))}
-                </div>
               </div>
-            );
-          })
-        )}
-      </div>
+            </div>
+          );
+        })
+      )}
+    </div>
 
-      {/* Device Map */}
-      {(site.latitude || points.some(p => p.latitude)) && (
-        <div className="mx-4 mt-5 mb-2">
-          <div className="flex items-center gap-2 mb-2">
+    {/* Device Map */}
+    {(site.latitude || points.some(p => p.latitude)) && (
+      <div className="mx-4 mt-5 mb-2">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
             <Map size={15} className="text-gray-400" />
             <h3 className="section-title mb-0">Device Map</h3>
           </div>
-          <div className="card overflow-hidden">
-            <div ref={mapRef} style={{ height: 280 }} className="w-full" />
+          {/* Tile layer switcher */}
+          <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5">
+            {Object.entries(TILE_LAYERS).map(([key, cfg]) => (
+              <button
+                key={key}
+                onClick={() => setTileLayer(key)}
+                className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all ${
+                  tileLayer === key
+                    ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'
+                    : 'text-gray-500 dark:text-gray-400'
+                }`}
+              >
+                {cfg.label}
+              </button>
+            ))}
           </div>
         </div>
-      )}
+        {/* isolation:isolate prevents Leaflet z-index from escaping this stacking context */}
+        <div className="card overflow-hidden" style={{ isolation: 'isolate' }}>
+          <div ref={mapRef} style={{ height: 300 }} className="w-full" />
+        </div>
+      </div>
+    )}
 
-      {/* Add Point FAB */}
-      <Link to={`/sites/${siteId}/add`} className="fab">
-        <Plus size={24} />
-      </Link>
-    </div>
+    {/* Add Point FAB */}
+    <Link to={`/sites/${siteId}/add`} className="fab">
+      <Plus size={24} />
+    </Link>
+  </div>
   );
 }
