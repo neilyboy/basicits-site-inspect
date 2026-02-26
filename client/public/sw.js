@@ -1,4 +1,4 @@
-const CACHE_NAME = 'site-inspect-v1';
+const CACHE_NAME = 'site-inspect-v2';
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',
