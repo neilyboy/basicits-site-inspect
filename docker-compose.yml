@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  site-inspect:
+    build: .
+    container_name: site-inspect
+    ports:
+      - "3456:3000"
+    volumes:
+      - site-data:/app/server/data
+      - site-uploads:/app/server/uploads
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+
+volumes:
+  site-data:
+  site-uploads:

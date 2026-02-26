@@ -1,0 +1,100 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-slate-100 text-gray-900 dark:bg-gray-950 dark:text-gray-100;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overscroll-behavior: none;
+  }
+  input, textarea, select {
+    @apply text-base;
+    font-size: 16px !important; /* Prevents iOS zoom on focus */
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-blue-600 text-white px-4 py-3 rounded-xl font-semibold text-sm
+           shadow-sm active:bg-blue-700 active:scale-[0.98] transition-all
+           disabled:opacity-50 disabled:cursor-not-allowed
+           flex items-center justify-center gap-2;
+  }
+  .btn-secondary {
+    @apply bg-white text-gray-700 px-4 py-3 rounded-xl font-semibold text-sm
+           border border-gray-200 shadow-sm active:bg-gray-50 active:scale-[0.98]
+           transition-all flex items-center justify-center gap-2
+           dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:active:bg-gray-700;
+  }
+  .btn-danger {
+    @apply bg-red-500 text-white px-4 py-3 rounded-xl font-semibold text-sm
+           shadow-sm active:bg-red-600 active:scale-[0.98] transition-all
+           flex items-center justify-center gap-2;
+  }
+  .card {
+    @apply bg-white rounded-2xl shadow-sm border border-gray-100/80
+           dark:bg-gray-800/90 dark:border-gray-700/60;
+  }
+  .input-field {
+    @apply w-full px-4 py-3 rounded-xl border border-gray-200 bg-white
+           focus:outline-none focus:ring-2 focus:ring-blue-500/60 focus:border-blue-400
+           placeholder-gray-300 text-gray-900 transition-all shadow-sm
+           dark:bg-gray-800/80 dark:border-gray-600/80 dark:text-gray-100
+           dark:placeholder-gray-600 dark:focus:border-blue-500;
+  }
+  .label {
+    @apply block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide
+           dark:text-gray-400;
+  }
+  .fab {
+    @apply fixed bottom-24 right-5 w-14 h-14 bg-blue-600 text-white rounded-full
+           shadow-lg flex items-center justify-center active:bg-blue-700
+           transition-all z-40;
+  }
+  .page-container {
+    @apply min-h-screen pb-24 bg-slate-100 dark:bg-gray-950;
+  }
+  .header {
+    @apply sticky top-0 z-30 px-4 py-3.5 flex items-center gap-3
+           bg-gradient-to-r from-slate-800 to-slate-700 text-white shadow-lg
+           dark:from-gray-900 dark:to-gray-800;
+  }
+  .section-title {
+    @apply text-[10px] font-bold uppercase tracking-widest text-gray-400 px-1 mb-2
+           dark:text-gray-500;
+  }
+}
+
+/* Photo annotation canvas */
+.annotation-canvas {
+  touch-action: none;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Hide scrollbar but keep functionality */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Print styles for report */
+@media print {
+  .no-print { display: none !important; }
+  .page-break { page-break-before: always; }
+  body { background: white; }
+}
