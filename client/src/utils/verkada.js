@@ -159,161 +159,188 @@ export function getPhotoTypeName(typeId) {
 }
 
 // ---------------------------------------------------------------------------
-// Verkada Product Catalog — US Commercial SKUs (Feb 2026 Inventory)
-// model = SKU family (without storage suffix / -HW)
-// name  = human readable description
-// Each entry: { model, name, accessories: [{ id, name }] }
+// Verkada Product Catalog — sourced from verkada.com product pages
+// model = SKU family (storage variants / -HW suffix omitted)
+// Accessories = real Verkada ACC-MNT-* SKUs from product pages
 // ---------------------------------------------------------------------------
 
-const CAM_DOME_ACC = [
-  { id: 'ACC-MNT-PEND-1',  name: 'ACC-MNT-PEND-1 — Pendant Mount' },
-  { id: 'ACC-MNT-HPEND-1', name: 'ACC-MNT-HPEND-1 — Hard-Ceiling Pendant Mount' },
-  { id: 'ACC-MNT-YPEND-1', name: 'ACC-MNT-YPEND-1 — Y-Pendant Mount' },
-  { id: 'ACC-MNT-YJBOX-1', name: 'ACC-MNT-YJBOX-1 — Y-Junction Box Mount' },
+// ── Shared indoor dome accessory sets ──────────────────────────────────────
+// Source: CD63 product page (representative of all indoor dome/mini models)
+const INDOOR_DOME_ACC = [
+  { id: 'ACC-MNT-CJBOX-1', name: 'ACC-MNT-CJBOX-1 — Circle Junction Box Mount' },
+  { id: 'ACC-MNT-LBRAC-1', name: 'ACC-MNT-LBRAC-1 — L-Bracket Mount' },
+  { id: 'ACC-MNT-ARM-1',   name: 'ACC-MNT-ARM-1 — Arm Mount' },
+  { id: 'ACC-MNT-PEND-1',  name: 'ACC-MNT-PEND-1 — Pendant Cap Mount' },
+  { id: 'ACC-MNT-REC-2',   name: 'ACC-MNT-REC-2 — Recessed Ceiling Mount' },
+  { id: 'ACC-MNT-CLIP-1',  name: 'ACC-MNT-CLIP-1 — Tile Clip Mount (no-drill ceiling tile)' },
+  { id: 'ACC-MNT-POLE-1',  name: 'ACC-MNT-POLE-1 — Pole Mount (2"–6" dia.)' },
+  { id: 'ACC-MNT-CORNER-1',name: 'ACC-MNT-CORNER-1 — Corner Mount' },
 ];
 
-const CAM_BULLET_ACC = [
-  { id: 'ACC-MNT-YJBOX-1', name: 'ACC-MNT-YJBOX-1 — Y-Junction Box Mount' },
-  { id: 'ACC-POLE-1',       name: 'ACC-POLE-1 — Pole Mount Adapter' },
+// Source: CD63-E product page (representative of all outdoor dome models)
+const OUTDOOR_DOME_ACC = [
+  { id: 'ACC-CAM-SHIELD-1', name: 'ACC-CAM-SHIELD-1 — Camera Weather Shield' },
+  { id: 'ACC-MNT-LBRAC-1',  name: 'ACC-MNT-LBRAC-1 — L-Bracket Mount' },
+  { id: 'ACC-MNT-CJBOX-1',  name: 'ACC-MNT-CJBOX-1 — Circle Junction Box Mount' },
+  { id: 'ACC-MNT-ARM-1',    name: 'ACC-MNT-ARM-1 — Arm Mount' },
+  { id: 'ACC-MNT-UPEND-1',  name: 'ACC-MNT-UPEND-1 — Umbrella Pendant Cap (weatherproof)' },
+  { id: 'ACC-MNT-POLE-1',   name: 'ACC-MNT-POLE-1 — Pole Mount (2"–6" dia.)' },
+  { id: 'ACC-MNT-CORNER-1', name: 'ACC-MNT-CORNER-1 — Corner Mount' },
 ];
 
-const CAM_PTZ_ACC = [
-  { id: 'ACC-MNT-PEND-1',  name: 'ACC-MNT-PEND-1 — Pendant Mount' },
-  { id: 'ACC-MNT-HPEND-1', name: 'ACC-MNT-HPEND-1 — Hard-Ceiling Pendant Mount' },
-  { id: 'ACC-POLE-1',       name: 'ACC-POLE-1 — Pole Mount Adapter' },
+// Source: CB52-E product page
+const BULLET_ACC = [
+  { id: 'ACC-MNT-SJBOX-1', name: 'ACC-MNT-SJBOX-1 — Square Junction Box Mount' },
+  { id: 'ACC-MNT-POLE-1',  name: 'ACC-MNT-POLE-1 — Pole Mount (2"–6" dia.)' },
+  { id: 'ACC-MNT-CORNER-1',name: 'ACC-MNT-CORNER-1 — Corner Mount' },
 ];
 
-const CAM_FISH_ACC = [
-  { id: 'ACC-MNT-PEND-1',  name: 'ACC-MNT-PEND-1 — Pendant Mount' },
-  { id: 'ACC-MNT-YJBOX-1', name: 'ACC-MNT-YJBOX-1 — Y-Junction Box Mount' },
+// Source: CF83-E product page
+const FISHEYE_ACC = [
+  { id: 'ACC-MNT-ANGLE-1',  name: 'ACC-MNT-ANGLE-1 — Angle Mount (30° tilt for wall FOV)' },
+  { id: 'ACC-CAM-SHIELD-1', name: 'ACC-CAM-SHIELD-1 — Camera Weather Shield' },
+  { id: 'ACC-MNT-ARM-1',    name: 'ACC-MNT-ARM-1 — Arm Mount' },
+  { id: 'ACC-MNT-PEND-1',   name: 'ACC-MNT-PEND-1 — Pendant Cap Mount' },
+  { id: 'ACC-MNT-UPEND-1',  name: 'ACC-MNT-UPEND-1 — Umbrella Pendant Cap (weatherproof)' },
+  { id: 'ACC-MNT-CJBOX-1',  name: 'ACC-MNT-CJBOX-1 — Circle Junction Box Mount' },
+  { id: 'ACC-MNT-CLIP-1',   name: 'ACC-MNT-CLIP-1 — Tile Clip Mount (no-drill ceiling tile)' },
+  { id: 'ACC-MNT-POLE-1',   name: 'ACC-MNT-POLE-1 — Pole Mount (2"–6" dia.)' },
+  { id: 'ACC-MNT-CORNER-1', name: 'ACC-MNT-CORNER-1 — Corner Mount' },
+];
+
+// Source: CM42 product page (mini dome)
+const MINI_DOME_ACC = [
+  { id: 'ACC-MNT-SJBOX-1', name: 'ACC-MNT-SJBOX-1 — Square Junction Box Mount' },
+  { id: 'ACC-MNT-MJBOX-1', name: 'ACC-MNT-MJBOX-1 — Mini Junction Box Mount' },
+  { id: 'ACC-MNT-ARM-1',   name: 'ACC-MNT-ARM-1 — Arm Mount' },
+  { id: 'ACC-MNT-MPEND-1', name: 'ACC-MNT-MPEND-1 — Mini Pendant Cap Mount' },
+  { id: 'ACC-MNT-CLIP-1',  name: 'ACC-MNT-CLIP-1 — Tile Clip Mount (no-drill ceiling tile)' },
+  { id: 'ACC-MNT-POLE-1',  name: 'ACC-MNT-POLE-1 — Pole Mount (2"–6" dia.)' },
+  { id: 'ACC-MNT-CORNER-1',name: 'ACC-MNT-CORNER-1 — Corner Mount' },
+];
+
+// Source: CH52-E product page (multisensor / PTZ — large arm)
+const MULTISENSOR_ACC = [
+  { id: 'ACC-MNT-XLARM-1', name: 'ACC-MNT-XLARM-1 — Large Arm Mount' },
+  { id: 'ACC-MNT-ARM-1',   name: 'ACC-MNT-ARM-1 — Arm Mount' },
+  { id: 'ACC-MNT-PEND-1',  name: 'ACC-MNT-PEND-1 — Pendant Cap Mount' },
+  { id: 'ACC-MNT-POLE-1',  name: 'ACC-MNT-POLE-1 — Pole Mount (2"–6" dia.)' },
+  { id: 'ACC-MNT-CORNER-1',name: 'ACC-MNT-CORNER-1 — Corner Mount' },
+];
+
+// Source: CP52-E product page
+const PTZ_ACC = [
+  { id: 'ACC-MNT-XLARM-1', name: 'ACC-MNT-XLARM-1 — Large Arm Mount' },
+  { id: 'ACC-MNT-POLE-1',  name: 'ACC-MNT-POLE-1 — Pole Mount (2"–6" dia.)' },
+  { id: 'ACC-MNT-CORNER-1',name: 'ACC-MNT-CORNER-1 — Corner Mount' },
+];
+
+// Source: TD53 product page
+const INTERCOM_ACC = [
+  { id: 'TD-ANGLE-MNT',    name: 'Angle Mount (25° — reversible)' },
+  { id: 'TD-CONDUIT-MNT',  name: 'Conduit Mount Box (gooseneck / conduit installs)' },
+  { id: 'TD-TRIM-PLATE',   name: 'Trim Plate (flush install cosmetic cover)' },
+  { id: 'TD-RAIN-HOOD',    name: 'Rain Hood (wall-mount weather protection)' },
+  { id: 'TD-2WIRE-POE',    name: 'PoE over 2-Wire Converter' },
+  { id: 'TD-BLUEPOINT-MNT',name: 'Blue Light Phone Retrofit Mount' },
+  { id: 'TD-DOOR-UNLOCK',  name: 'Door Power / Unlock Peripheral' },
 ];
 
 export const VERKADA_CATALOG = {
 
   // ── CAMERAS ─────────────────────────────────────────────────────────────
 
-  // Indoor / Outdoor Mini Dome (CD22 series – entry level)
   dome: [
-    { model: 'CD22',  name: 'CD22 — Indoor Mini Dome (1080p)',            accessories: [...CAM_DOME_ACC] },
-    { model: 'CD22-E',name: 'CD22-E — Outdoor Mini Dome (1080p)',         accessories: [...CAM_DOME_ACC] },
-    { model: 'CD32',  name: 'CD32 — Indoor Mini Dome (4MP)',              accessories: [...CAM_DOME_ACC] },
-    { model: 'CD32-E',name: 'CD32-E — Outdoor Mini Dome (4MP)',           accessories: [...CAM_DOME_ACC] },
-    { model: 'CD43',  name: 'CD43 — Indoor Dome (4MP)',                   accessories: [...CAM_DOME_ACC] },
-    { model: 'CD43-E',name: 'CD43-E — Outdoor Dome (4MP)',                accessories: [...CAM_DOME_ACC] },
-    { model: 'CD53',  name: 'CD53 — Indoor Dome (4K)',                    accessories: [...CAM_DOME_ACC] },
-    { model: 'CD53-E',name: 'CD53-E — Outdoor Dome (4K)',                 accessories: [...CAM_DOME_ACC] },
-    { model: 'CD63',  name: 'CD63 — Indoor Dome (4K Long-Range)',         accessories: [...CAM_DOME_ACC] },
-    { model: 'CD63-E',name: 'CD63-E — Outdoor Dome (4K Long-Range)',      accessories: [...CAM_DOME_ACC] },
+    { model: 'CD22',   name: 'CD22 — Indoor Dome (3MP)',                  accessories: [...INDOOR_DOME_ACC] },
+    { model: 'CD22-E', name: 'CD22-E — Outdoor Dome (3MP)',               accessories: [...OUTDOOR_DOME_ACC] },
+    { model: 'CD32',   name: 'CD32 — Indoor Dome (3MP, 10-yr)',           accessories: [...INDOOR_DOME_ACC] },
+    { model: 'CD32-E', name: 'CD32-E — Outdoor Dome (3MP, 10-yr)',        accessories: [...OUTDOOR_DOME_ACC] },
+    { model: 'CD43',   name: 'CD43 — Indoor Dome (5MP)',                  accessories: [...INDOOR_DOME_ACC] },
+    { model: 'CD43-E', name: 'CD43-E — Outdoor Dome (5MP)',               accessories: [...OUTDOOR_DOME_ACC] },
+    { model: 'CD53',   name: 'CD53 — Indoor Dome (5MP, zoom lens)',       accessories: [...INDOOR_DOME_ACC] },
+    { model: 'CD53-E', name: 'CD53-E — Outdoor Dome (5MP, zoom lens)',    accessories: [...OUTDOOR_DOME_ACC] },
+    { model: 'CD63',   name: 'CD63 — Indoor Dome (4K, zoom lens)',        accessories: [...INDOOR_DOME_ACC] },
+    { model: 'CD63-E', name: 'CD63-E — Outdoor Dome (4K, zoom lens)',     accessories: [...OUTDOOR_DOME_ACC] },
   ],
 
   bullet: [
-    { model: 'CB52-E',   name: 'CB52-E — Outdoor Bullet (1080p)',         accessories: [...CAM_BULLET_ACC] },
-    { model: 'CB52-TE',  name: 'CB52-TE — Outdoor Bullet Turret (1080p)', accessories: [...CAM_BULLET_ACC] },
-    { model: 'CB62-E',   name: 'CB62-E — Outdoor Bullet (4MP)',           accessories: [...CAM_BULLET_ACC] },
-    { model: 'CB62-TE',  name: 'CB62-TE — Outdoor Bullet Turret (4MP)',   accessories: [...CAM_BULLET_ACC] },
+    { model: 'CB52-E',  name: 'CB52-E — Outdoor Bullet (5MP, 3× zoom)',   accessories: [...BULLET_ACC] },
+    { model: 'CB52-TE', name: 'CB52-TE — Outdoor Bullet Turret (5MP, telephoto)', accessories: [...BULLET_ACC] },
+    { model: 'CB62-E',  name: 'CB62-E — Outdoor Bullet (4K, zoom)',       accessories: [...BULLET_ACC] },
+    { model: 'CB62-TE', name: 'CB62-TE — Outdoor Bullet Turret (4K, telephoto)', accessories: [...BULLET_ACC] },
   ],
 
   fisheye: [
-    { model: 'CF81-E',   name: 'CF81-E — Outdoor Fisheye 180° (4K)',      accessories: [...CAM_FISH_ACC] },
-    { model: 'CF83-E',   name: 'CF83-E — Outdoor Fisheye 360° (4K)',      accessories: [...CAM_FISH_ACC] },
-    { model: 'CF83',     name: 'CF83 — Indoor Fisheye 360° (4K)',         accessories: [...CAM_FISH_ACC] },
+    { model: 'CF83-E', name: 'CF83-E — Outdoor Fisheye 180° (12.5MP)',   accessories: [...FISHEYE_ACC] },
   ],
 
   ptz: [
-    { model: 'CP52-E',   name: 'CP52-E — Outdoor PTZ (1080p, 32× optical)', accessories: [...CAM_PTZ_ACC] },
-    { model: 'CP63-E',   name: 'CP63-E — Outdoor PTZ (4K, 36× optical)',    accessories: [...CAM_PTZ_ACC] },
+    { model: 'CP52-E', name: 'CP52-E — Outdoor PTZ (5MP, 28× optical)',  accessories: [...PTZ_ACC] },
+    { model: 'CP63-E', name: 'CP63-E — Outdoor PTZ (4K, 32× optical)',   accessories: [...PTZ_ACC] },
   ],
 
   mini: [
-    { model: 'CM22',     name: 'CM22 — Indoor Hidden Mini (1080p)',        accessories: [] },
-    { model: 'CM41',     name: 'CM41 — Indoor Discreet Mini (wide FOV)',   accessories: [] },
-    { model: 'CM42',     name: 'CM42 — Indoor Mini Dome (1080p)',          accessories: [
-      { id: 'CM42-256S', name: 'CM42 Standard Lens' },
-    ]},
+    { model: 'CM22',    name: 'CM22 — Indoor Mini Dome (3MP)',            accessories: [...MINI_DOME_ACC] },
+    { model: 'CM41-E',  name: 'CM41-E — Outdoor Mini Dome (5MP)',         accessories: [...OUTDOOR_DOME_ACC] },
+    { model: 'CM42',    name: 'CM42 — Indoor Mini Dome (5MP)',            accessories: [...MINI_DOME_ACC] },
+    { model: 'CM42-S',  name: 'CM42-S — Mini Split Camera (5MP)',         accessories: [...MINI_DOME_ACC] },
   ],
 
   multisensor: [
-    { model: 'CH53-E',   name: 'CH53-E — Outdoor Multisensor 4-head (4K)', accessories: [
-      { id: 'ACC-MNT-PEND-1',  name: 'ACC-MNT-PEND-1 — Pendant Mount' },
-      { id: 'ACC-POLE-1',       name: 'ACC-POLE-1 — Pole Mount Adapter' },
-    ]},
-    { model: 'CH63-E',   name: 'CH63-E — Outdoor Multisensor 4-head (4K LR)', accessories: [
-      { id: 'ACC-MNT-PEND-1',  name: 'ACC-MNT-PEND-1 — Pendant Mount' },
-      { id: 'ACC-POLE-1',       name: 'ACC-POLE-1 — Pole Mount Adapter' },
-    ]},
-    { model: 'CY53',     name: 'CY53 — Indoor 180° Panoramic (4K)',        accessories: [...CAM_DOME_ACC] },
-    { model: 'CY63',     name: 'CY63 — Indoor 180° Panoramic (4K LR)',     accessories: [...CAM_DOME_ACC] },
-    { model: 'CR63-E',   name: 'CR63-E — Outdoor 360° Panoramic (4K)',     accessories: [
-      { id: 'ACC-POLE-1', name: 'ACC-POLE-1 — Pole Mount Adapter' },
-    ]},
+    { model: 'CH52-E',  name: 'CH52-E — Outdoor 4-Sensor Multisensor (5MP/sensor)', accessories: [...MULTISENSOR_ACC] },
+    { model: 'CH53-E',  name: 'CH53-E — Outdoor 4-Sensor Multisensor (5MP/sensor, zoom)', accessories: [...MULTISENSOR_ACC] },
+    { model: 'CH63-E',  name: 'CH63-E — Outdoor 4-Sensor Multisensor (4K/sensor)', accessories: [...MULTISENSOR_ACC] },
+    { model: 'CY53-E',  name: 'CY53-E — Outdoor 2-Sensor Multisensor (5MP/sensor)', accessories: [...MULTISENSOR_ACC] },
+    { model: 'CY63-E',  name: 'CY63-E — Outdoor 2-Sensor Multisensor (4K/sensor)', accessories: [...MULTISENSOR_ACC] },
   ],
 
-  // Cloud Connect / Recording Appliance
   other_cam: [
-    { model: 'CC300',    name: 'CC300 — Cloud Connect 300 (NVR Bridge)',   accessories: [] },
-    { model: 'CC500',    name: 'CC500 — Cloud Connect 500 (NVR Bridge)',   accessories: [] },
-    { model: 'CC700',    name: 'CC700 — Cloud Connect 700 (NVR Bridge)',   accessories: [] },
-    { model: 'VX52',     name: 'VX52 — Vehicle Tracking Camera',           accessories: [] },
-    { model: 'ACC-POLE-1', name: 'ACC-POLE-1 — Pole Mount Kit (accessory only)', accessories: [] },
-    { model: 'ACC-BAT-430WH-E-1', name: 'ACC-BAT-430WH-E-1 — Solar Battery Pack', accessories: [] },
+    { model: 'CR63-E',  name: 'CR63-E — Remote Camera (4K, LTE + battery, solar/hardwired)', accessories: [
+      { id: 'ACC-BAT-430WH-E-1', name: 'ACC-BAT-430WH-E-1 — Solar Battery Pack' },
+    ]},
+    { model: 'CC300',   name: 'CC300 — Cloud Connect 300 (NVR Bridge)',   accessories: [] },
+    { model: 'CC500',   name: 'CC500 — Cloud Connect 500 (NVR Bridge)',   accessories: [] },
+    { model: 'CC700',   name: 'CC700 — Cloud Connect 700 (NVR Bridge)',   accessories: [] },
   ],
 
   // ── ACCESS CONTROL ───────────────────────────────────────────────────────
 
   door_controller: [
-    { model: 'AC12',     name: 'AC12 — Door Controller (1-door, PoE)',     accessories: [
-      { id: 'ACCX-HUB-PIM',  name: 'ACCX-HUB-PIM — Power & IO Module' },
-      { id: 'ACCX-HUB-AH30', name: 'ACCX-HUB-AH30 — Access Hub (30A PSU)' },
-      { id: 'ACCX-HUB-GWE',  name: 'ACCX-HUB-GWE — Gateway Expander' },
-    ]},
-    { model: 'AC42',     name: 'AC42 — Door Controller (2-door)',          accessories: [
-      { id: 'ACCX-HUB-PIM',  name: 'ACCX-HUB-PIM — Power & IO Module' },
-      { id: 'ACCX-HUB-AH30', name: 'ACCX-HUB-AH30 — Access Hub (30A PSU)' },
-      { id: 'ACCX-HUB-GWE',  name: 'ACCX-HUB-GWE — Gateway Expander' },
-    ]},
-    { model: 'AC62',     name: 'AC62 — Door Controller (4-door)',          accessories: [
-      { id: 'ACCX-HUB-PIM',  name: 'ACCX-HUB-PIM — Power & IO Module' },
-      { id: 'ACCX-HUB-AH30', name: 'ACCX-HUB-AH30 — Access Hub (30A PSU)' },
-      { id: 'ACCX-HUB-GWE',  name: 'ACCX-HUB-GWE — Gateway Expander' },
-    ]},
+    { model: 'AC12', name: 'AC12 — Access Controller (1 door, PoE-powered)', accessories: [] },
+    { model: 'AC42', name: 'AC42 — Access Controller (4 doors)',             accessories: [] },
+    { model: 'AC62', name: 'AC62 — Access Controller (16 doors)',            accessories: [] },
+    { model: 'AX11', name: 'AX11 — IO & Elevator Controller (16 in/out, 2 readers)', accessories: [] },
   ],
 
   card_reader: [
-    { model: 'AD34',     name: 'AD34 — Card Reader (OSDP, Mullion)',       accessories: [
+    { model: 'AD34', name: 'AD34 — Door Reader (OSDP v2, BLE Intent Unlock)', accessories: [
       { id: 'single_gang', name: 'Single-Gang Backplate' },
     ]},
-    { model: 'AD64',     name: 'AD64 — Card Reader + Keypad (OSDP)',       accessories: [
+    { model: 'AD64', name: 'AD64 — Door Reader + Keypad (OSDP v2, PIN + BLE)', accessories: [
       { id: 'single_gang', name: 'Single-Gang Backplate' },
     ]},
-    { model: 'AF64',     name: 'AF64 — Facial Auth Reader',                accessories: [
+    { model: 'AF64', name: 'AF64 — Access Station Pro (Face Unlock + camera + controller)', accessories: [
       { id: 'single_gang', name: 'Single-Gang Backplate' },
     ]},
-    { model: 'AX11',     name: 'AX11 — Elevator/Auxiliary Controller',     accessories: [] },
-    { model: 'DK22',     name: 'DK22 — Desk Reader / Check-in Kiosk',      accessories: [] },
   ],
 
   lock: [
-    { model: 'AL54-CY-CC', name: 'AL54-CY-CC — Cylindrical Lock (Core, Classroom)', accessories: [] },
-    { model: 'AL54-CY-FC', name: 'AL54-CY-FC — Cylindrical Lock (Core, Function)',  accessories: [] },
-    { model: 'AL54-CY-SC', name: 'AL54-CY-SC — Cylindrical Lock (Core, Storeroom)', accessories: [] },
-    { model: 'AL54-MS-CC', name: 'AL54-MS-CC — Mortise Lock (Classroom)',            accessories: [] },
-    { model: 'AL54-MS-FC', name: 'AL54-MS-FC — Mortise Lock (Function)',             accessories: [] },
-    { model: 'AL54-MS-SC', name: 'AL54-MS-SC — Mortise Lock (Storeroom)',            accessories: [] },
+    { model: 'AL54-CY', name: 'AL54-CY — Wireless Cylindrical Lock (3 function variants)', accessories: [] },
+    { model: 'AL54-MS', name: 'AL54-MS — Wireless Mortise Lock (coming soon)',              accessories: [] },
   ],
 
   rex: [
-    { model: 'ACC-DR-MS-1', name: 'ACC-DR-MS-1 — Motion Sensor REX (Verkada)',  accessories: [] },
-    { model: 'Generic PIR REX',         name: 'Generic PIR REX',                accessories: [] },
-    { model: 'Generic Push Button REX', name: 'Generic Push Button REX',         accessories: [] },
+    { model: 'Generic PIR REX',         name: 'Generic PIR Request-to-Exit',   accessories: [] },
+    { model: 'Generic Push Button REX', name: 'Generic Push-Button REX',        accessories: [] },
   ],
 
   mag_lock: [
-    { model: 'Mag Lock 600lb',  name: 'Mag Lock — 600 lb Single',          accessories: [
+    { model: 'Mag Lock 600lb',  name: 'Mag Lock — 600 lb Single',  accessories: [
       { id: 'armature_plate', name: 'Armature Plate' },
       { id: 'z_bracket',      name: 'Z-Bracket Kit' },
       { id: 'lz_bracket',     name: 'L-Z Bracket Kit' },
     ]},
-    { model: 'Mag Lock 1200lb', name: 'Mag Lock — 1200 lb Double',         accessories: [
+    { model: 'Mag Lock 1200lb', name: 'Mag Lock — 1200 lb Double', accessories: [
       { id: 'armature_plate', name: 'Armature Plate' },
       { id: 'z_bracket',      name: 'Z-Bracket Kit' },
     ]},
@@ -325,111 +352,88 @@ export const VERKADA_CATALOG = {
   ],
 
   other_ac: [
-    { model: 'ACCX-HUB-AH30', name: 'ACCX-HUB-AH30 — Access Hub (30A PSU)',     accessories: [] },
-    { model: 'ACCX-HUB-GWE',  name: 'ACCX-HUB-GWE — Gateway Expander',          accessories: [] },
-    { model: 'ACCX-HUB-PIM',  name: 'ACCX-HUB-PIM — Power & IO Module',         accessories: [] },
-    { model: 'ACC-CEL-LTE-2', name: 'ACC-CEL-LTE-2 — LTE Cellular Backup',      accessories: [] },
-    { model: 'ACC-VBX-200WH', name: 'ACC-VBX-200WH — Backup Battery (200Wh)',   accessories: [] },
-    { model: 'ACC-VBX-ENC',   name: 'ACC-VBX-ENC — Battery Enclosure',          accessories: [] },
+    { model: 'ACC-CEL-LTE-2', name: 'ACC-CEL-LTE-2 — LTE Cellular Backup (for BP52 panel)', accessories: [] },
+    { model: 'ACC-VBX-200WH', name: 'ACC-VBX-200WH — LiFePO4 Backup Battery',               accessories: [] },
+    { model: 'ACC-VBX-ENC',   name: 'ACC-VBX-ENC — Dual Battery Expansion Enclosure',        accessories: [] },
   ],
 
   // ── INTERCOMS ────────────────────────────────────────────────────────────
 
   video_intercom: [
-    { model: 'TD33',     name: 'TD33 — Video Intercom (Compact)',          accessories: [
-      { id: 'ACC-INT-TS-COND',  name: 'ACC-INT-TS-COND — Conduit Box' },
-      { id: 'ACC-INT-PLATE-1',  name: 'ACC-INT-PLATE-1 — Trim Plate' },
-    ]},
-    { model: 'TD53',     name: 'TD53 — Video Intercom (Standard)',         accessories: [
-      { id: 'ACC-INT-TS-COND',  name: 'ACC-INT-TS-COND — Conduit Box' },
-      { id: 'ACC-INT-PLATE-1',  name: 'ACC-INT-PLATE-1 — Trim Plate' },
-      { id: 'ACC-INT-SMB-4',    name: 'ACC-INT-SMB-4 — Surface Mount Box' },
-    ]},
-    { model: 'TD63',     name: 'TD63 — Video Intercom (4K)',               accessories: [
-      { id: 'ACC-INT-TS-COND',  name: 'ACC-INT-TS-COND — Conduit Box' },
-      { id: 'ACC-INT-PLATE-1',  name: 'ACC-INT-PLATE-1 — Trim Plate' },
-      { id: 'ACC-INT-SMB-4',    name: 'ACC-INT-SMB-4 — Surface Mount Box' },
-    ]},
+    { model: 'TD33', name: 'TD33 — Video Intercom (slim, mullion mount, keycard/BLE/NFC/QR)', accessories: [...INTERCOM_ACC] },
+    { model: 'TD53', name: 'TD53 — Video Intercom (full-size, 5MP, keycard/BLE/NFC/QR)',      accessories: [...INTERCOM_ACC] },
+    { model: 'TD63', name: 'TD63 — Video Intercom (full-size + keypad PIN, keycard/BLE)',     accessories: [...INTERCOM_ACC] },
   ],
 
   audio_intercom: [
-    { model: 'TS12-N',    name: 'TS12-N — Indoor Call Station',            accessories: [
-      { id: 'TS12-N-RB',  name: 'TS12-N-RB — Retrofit Backbox' },
-      { id: 'TS12-N-R2B', name: 'TS12-N-R2B — Deep Retrofit Backbox' },
+    { model: 'TS12', name: 'TS12 — Audio Intercom (audio-only, high-noise environments)',    accessories: [
+      { id: 'TS12-RETROFIT-BB',  name: 'Retrofit Backbox' },
+      { id: 'TS12-DEEP-BB',      name: 'Deep Retrofit Backbox' },
     ]},
   ],
 
-  other_intercom: [
-    { model: 'ACC-INT-SMB-4',  name: 'ACC-INT-SMB-4 — Intercom Surface Mount Box', accessories: [] },
-    { model: 'ACC-INT-TS-COND',name: 'ACC-INT-TS-COND — Intercom Conduit Box',     accessories: [] },
-    { model: 'ACC-INT-PLATE-1',name: 'ACC-INT-PLATE-1 — Intercom Trim Plate',      accessories: [] },
-  ],
+  other_intercom: [],
 
   // ── ALARMS ───────────────────────────────────────────────────────────────
 
   alarm_panel: [
-    { model: 'BE32',     name: 'BE32 — Alarm Panel (Base Hub)',            accessories: [
+    { model: 'BP52', name: 'BP52 — Wired Alarm Panel (32-zone, cloud-managed)', accessories: [
       { id: 'ACC-CEL-LTE-2', name: 'ACC-CEL-LTE-2 — LTE Cellular Backup' },
-      { id: 'ACC-VBX-200WH', name: 'ACC-VBX-200WH — Backup Battery' },
+      { id: 'ACC-VBX-200WH', name: 'ACC-VBX-200WH — LiFePO4 Backup Battery' },
+      { id: 'ACC-VBX-ENC',   name: 'ACC-VBX-ENC — Dual Battery Expansion Enclosure' },
     ]},
+    { model: 'BP32', name: 'BP32 — Wireless Alarm Panel (PoE, built-in LTE + battery)', accessories: [] },
+    { model: 'BK22', name: 'BK22 — Alarm Keypad (touchscreen, arm/disarm)',             accessories: [] },
   ],
 
   door_sensor: [
-    { model: 'BR31',     name: 'BR31 — Door/Window Sensor (Mini)',         accessories: [] },
-    { model: 'BR32',     name: 'BR32 — Door/Window Sensor (Standard)',     accessories: [] },
-    { model: 'BR33',     name: 'BR33 — Door/Window Sensor (Wide Gap)',     accessories: [] },
-    { model: 'BR35',     name: 'BR35 — Door/Window Sensor (Recessed)',     accessories: [] },
+    { model: 'BR Series (wired)',    name: 'BR Series — Wired Door/Window Sensors',    accessories: [] },
+    { model: 'BR Series (wireless)', name: 'BR Series — Wireless Door/Window Sensors', accessories: [] },
+    { model: 'Q Series',             name: 'Q Series — Next-Gen Wireless Sensors (dual-tech, longer range)', accessories: [] },
   ],
 
   motion_sensor: [
-    { model: 'BK22',     name: 'BK22 — Motion Sensor (PIR)',              accessories: [] },
+    { model: 'BR Series PIR (wired)',    name: 'BR Series — Wired PIR Motion Sensor',    accessories: [] },
+    { model: 'BR Series PIR (wireless)', name: 'BR Series — Wireless PIR Motion Sensor', accessories: [] },
+    { model: 'Q Series PIR',             name: 'Q Series — Wireless PIR Motion Sensor (dual-tech)', accessories: [] },
   ],
 
   glass_break: [
-    { model: 'BZ11',     name: 'BZ11 — Glass Break Sensor (Acoustic)',    accessories: [] },
-    { model: 'BZ32',     name: 'BZ32 — Glass Break Sensor + PIR Combo',   accessories: [] },
+    { model: 'BR Series Glass Break', name: 'BR Series — Glass Break Sensor', accessories: [] },
+    { model: 'Q Series Glass Break',  name: 'Q Series — Glass Break Sensor',  accessories: [] },
   ],
 
   panic_button: [
-    { model: 'BP32',     name: 'BP32 — Panic Button (Wired)',              accessories: [] },
-    { model: 'BP52',     name: 'BP52 — Panic Button (Wireless)',           accessories: [] },
+    { model: 'BR Series Panic (wired)',    name: 'BR Series — Wired Panic Button',    accessories: [] },
+    { model: 'BR Series Panic (wireless)', name: 'BR Series — Wireless Panic Button', accessories: [] },
   ],
 
   water_sensor: [
-    { model: 'WH32',     name: 'WH32 — Water / Flood Sensor',             accessories: [] },
-    { model: 'WH52',     name: 'WH52 — Water Sensor (Rope)',               accessories: [] },
+    { model: 'BR Series Water', name: 'BR Series — Water Leak Sensor', accessories: [] },
+    { model: 'Q Series Water',  name: 'Q Series — Water Leak Sensor',  accessories: [] },
   ],
 
   smoke_detector: [
-    { model: 'QC11-W',   name: 'QC11-W — CO Detector (Wireless)',         accessories: [] },
-    { model: 'QT11-W',   name: 'QT11-W — Smoke + CO Detector (Wireless)', accessories: [] },
+    { model: 'BR Series Smoke/CO', name: 'BR Series — Smoke / CO Sensor', accessories: [] },
+    { model: 'Q Series Smoke/CO',  name: 'Q Series — Smoke / CO Sensor',  accessories: [] },
   ],
 
   other_alarm: [
-    { model: 'BK22',     name: 'BK22 — Motion Sensor (PIR)',              accessories: [] },
-    { model: 'DK22',     name: 'DK22 — Desk / Touchscreen Reader',        accessories: [] },
-    { model: 'GC31',     name: 'GC31 — Gateway (Cellular)',               accessories: [] },
-    { model: 'GW31-E',   name: 'GW31-E — Gateway (Wi-Fi/Cellular)',       accessories: [] },
+    { model: 'BZ11', name: 'BZ11 — Talk-Down Horn Speaker (cloud-managed deterrence)',        accessories: [] },
+    { model: 'BZ32', name: 'BZ32 — Siren Strobe (wired or wireless, indoor/outdoor)',         accessories: [] },
   ],
 
   // ── ENVIRONMENTAL SENSORS ───────────────────────────────────────────────
+  // Source: verkada.com/air-quality/sensors/ — SV21 / SV23 / SV25
 
   air_quality: [
-    { model: 'SV25',     name: 'SV25 — Air Quality Sensor (CO2, VOC, PM2.5, Temp, Humidity)', accessories: [
-      { id: 'wall_plate', name: 'Wall Plate Mount' },
-    ]},
-    { model: 'SV25-128', name: 'SV25-128 — Air Quality Sensor (+ 128GB local storage)',       accessories: [
-      { id: 'wall_plate', name: 'Wall Plate Mount' },
-    ]},
+    { model: 'SV21', name: 'SV21 — Temp, Humidity, CO₂ Sensor',                           accessories: [] },
+    { model: 'SV23', name: 'SV23 — Air Quality Sensor (CO₂, Vape, PM, TVOC, noise, motion)', accessories: [] },
+    { model: 'SV25', name: 'SV25 — Advanced Air Quality (CO₂, Vape, PM, CO, formaldehyde, audio, barometric)', accessories: [] },
   ],
 
   temp_humidity: [
-    { model: 'SV21',     name: 'SV21 — Temperature & Humidity Sensor',    accessories: [
-      { id: 'wall_plate', name: 'Wall Plate Mount' },
-    ]},
-    { model: 'SV23',     name: 'SV23 — Temperature & Humidity + Motion Sensor', accessories: [
-      { id: 'wall_plate', name: 'Wall Plate Mount' },
-    ]},
+    { model: 'SV21', name: 'SV21 — Temp & Humidity Sensor (+ CO₂)', accessories: [] },
   ],
 
   other_sensor: [],
@@ -448,10 +452,10 @@ export const VERKADA_CATALOG = {
     { model: 'Other',                name: 'Other / Customer Provided',  accessories: [] },
   ],
   patch_panel: [
-    { model: '24-Port Cat6',  name: '24-Port Cat6 Patch Panel',          accessories: [] },
-    { model: '48-Port Cat6',  name: '48-Port Cat6 Patch Panel',          accessories: [] },
-    { model: '24-Port Cat6A', name: '24-Port Cat6A Patch Panel',         accessories: [] },
-    { model: 'Other',         name: 'Other',                              accessories: [] },
+    { model: '24-Port Cat6',  name: '24-Port Cat6 Patch Panel',  accessories: [] },
+    { model: '48-Port Cat6',  name: '48-Port Cat6 Patch Panel',  accessories: [] },
+    { model: '24-Port Cat6A', name: '24-Port Cat6A Patch Panel', accessories: [] },
+    { model: 'Other',         name: 'Other',                      accessories: [] },
   ],
   rack: [],
   other_network: [],
@@ -459,24 +463,24 @@ export const VERKADA_CATALOG = {
   // ── VIEWING STATION ─────────────────────────────────────────────────────
 
   viewing_station: [
-    { model: 'VX52',     name: 'VX52 — Viewing Station (1080p All-in-One)',   accessories: [
+    { model: 'VS52', name: 'VS52 — Viewing Station (All-in-One Display)', accessories: [
       { id: 'wall_mount_vesa', name: 'VESA Wall Mount' },
       { id: 'desk_stand',      name: 'Desk Stand' },
     ]},
   ],
 
-  // ── GUEST MANAGEMENT ────────────────────────────────────────────────────
+  // ── GUEST MANAGEMENT / WORKPLACE ─────────────────────────────────────────
 
   visitor_kiosk: [
-    { model: 'GC31',     name: 'GC31 — Guest / Lobby Kiosk (Cellular GW)', accessories: [
-      { id: 'floor_stand', name: 'Floor Stand' },
-      { id: 'desk_stand',  name: 'Desk Stand' },
-      { id: 'wall_mount',  name: 'Wall Mount' },
+    { model: 'Verkada Guest (iPad)', name: 'Verkada Guest — iPad Kiosk (visitor management)', accessories: [
+      { id: 'ipad_floor_stand', name: 'iPad Floor Stand' },
+      { id: 'ipad_desk_stand',  name: 'iPad Desk Stand' },
+      { id: 'ipad_wall_mount',  name: 'iPad Wall Mount' },
     ]},
-    { model: 'GW31-E',   name: 'GW31-E — Gateway + Guest Wi-Fi',            accessories: [] },
+    { model: 'Verkada Mailroom', name: 'Verkada Mailroom — Package Delivery Management', accessories: [] },
   ],
   ipad_check_in: [
-    { model: 'iPad (Customer Provided)', name: 'iPad (Customer Provided)',   accessories: [
+    { model: 'iPad (Customer Provided)', name: 'iPad (Customer Provided)', accessories: [
       { id: 'ipad_stand',     name: 'iPad Kiosk Stand' },
       { id: 'ipad_enclosure', name: 'Secure Enclosure' },
     ]},
