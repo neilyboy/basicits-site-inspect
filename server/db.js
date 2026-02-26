@@ -105,4 +105,9 @@ try {
   db.exec(`ALTER TABLE sites ADD COLUMN job_flags TEXT DEFAULT NULL`);
 } catch (_) { /* column already exists */ }
 
+// Migration: add accessories to inspection_points
+try {
+  db.exec(`ALTER TABLE inspection_points ADD COLUMN accessories TEXT DEFAULT NULL`);
+} catch (_) { /* column already exists */ }
+
 module.exports = db;

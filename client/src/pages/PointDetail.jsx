@@ -8,7 +8,7 @@ import {
 import { api } from '../utils/api';
 import { compressImages } from '../utils/imageCompress';
 import { queueUpload, flushQueue, getQueueCount } from '../utils/uploadQueue';
-import { getCategoryById, getSubcategoryName, PHOTO_TYPES, getPhotoTypeName } from '../utils/verkada';
+import { getCategoryById, getSubcategoryName, PHOTO_TYPES, getPhotoTypeName, getModelsForSubcategory, getAccessoriesForModel } from '../utils/verkada';
 import VoiceNote from '../components/VoiceNote';
 
 const DIFFICULTY_LABELS = [
@@ -74,6 +74,7 @@ export default function PointDetail() {
         floor: data.floor || '',
         notes: data.notes || '',
         product_model: data.product_model || '',
+        accessories: data.accessories ? data.accessories.split(', ').filter(Boolean) : [],
         install_difficulty: data.install_difficulty || null,
         idf_point_id: data.idf_point_id || null,
         is_flagged: data.is_flagged ? true : false,
@@ -93,7 +94,14 @@ export default function PointDetail() {
   async function handleSaveEdit(e) {
     e.preventDefault();
     try {
-      const updated = await api.updatePoint(pointId, editForm);
+      const payload = {
+        ...editForm,
+        accessories: (editForm.accessories || []).join(', '),
+        product_model: editForm.product_model === '__other__'
+          ? (editForm.product_model_custom || '')
+          : editForm.product_model,
+      };
+      const updated = await api.updatePoint(pointId, payload);
       setPoint(updated);
       setEditing(false);
     } catch (err) {
@@ -263,14 +271,69 @@ export default function PointDetail() {
                 onChange={(e) => setEditForm({ ...editForm, floor: e.target.value })}
               />
             </div>
-            <div>
+            <div className="col-span-2">
               <label className="label">Model</label>
-              <input
-                type="text"
-                className="input-field"
-                value={editForm.product_model}
-                onChange={(e) => setEditForm({ ...editForm, product_model: e.target.value })}
-              />
+              {(() => {
+                const models = getModelsForSubcategory(point.subcategory);
+                if (models.length > 0) {
+                  const accessories = getAccessoriesForModel(point.subcategory, editForm.product_model);
+                  return (
+                    <div className="space-y-2">
+                      <select
+                        className="input-field"
+                        value={editForm.product_model}
+                        onChange={(e) => setEditForm({ ...editForm, product_model: e.target.value, accessories: [] })}
+                      >
+                        <option value="">— Select model —</option>
+                        {models.map((m) => (
+                          <option key={m.model} value={m.model}>{m.name}</option>
+                        ))}
+                        <option value="__other__">Other / Unlisted</option>
+                      </select>
+                      {editForm.product_model === '__other__' && (
+                        <input
+                          type="text"
+                          className="input-field"
+                          placeholder="Enter model number"
+                          value={editForm.product_model_custom || ''}
+                          onChange={(e) => setEditForm({ ...editForm, product_model_custom: e.target.value })}
+                        />
+                      )}
+                      {accessories.length > 0 && (
+                        <div className="rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-3">
+                          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">Accessories / Mounts</p>
+                          <div className="grid grid-cols-2 gap-1.5">
+                            {accessories.map((acc) => (
+                              <label key={acc.id} className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  className="w-4 h-4 rounded accent-blue-500"
+                                  checked={(editForm.accessories || []).includes(acc.id)}
+                                  onChange={() => setEditForm((prev) => ({
+                                    ...prev,
+                                    accessories: (prev.accessories || []).includes(acc.id)
+                                      ? prev.accessories.filter((a) => a !== acc.id)
+                                      : [...(prev.accessories || []), acc.id],
+                                  }))}
+                                />
+                                <span className="text-sm text-gray-700 dark:text-gray-300">{acc.name}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+                return (
+                  <input
+                    type="text"
+                    className="input-field"
+                    value={editForm.product_model}
+                    onChange={(e) => setEditForm({ ...editForm, product_model: e.target.value })}
+                  />
+                );
+              })()}
             </div>
           </div>
 

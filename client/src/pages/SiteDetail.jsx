@@ -24,6 +24,7 @@ export default function SiteDetail() {
   const [points, setPoints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [archiving, setArchiving] = useState(false);
+  const [photoFilter, setPhotoFilter] = useState(false);
   const [tileLayer, setTileLayer] = useState('street');
   const tileLayerRef = useRef(null);
 
@@ -280,8 +281,24 @@ export default function SiteDetail() {
         </div>
       </div>
 
+      {/* Device List Header + Filter */}
+      <div className="px-4 mt-5 flex items-center justify-between">
+        <h2 className="text-sm font-bold text-gray-700 dark:text-gray-300">Devices</h2>
+        <button
+          onClick={() => setPhotoFilter((v) => !v)}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+            photoFilter
+              ? 'bg-amber-500 text-white shadow-sm'
+              : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
+          }`}
+        >
+          <Camera size={13} />
+          {photoFilter ? 'Needs Photo' : 'All Devices'}
+        </button>
+      </div>
+
       {/* Category Sections */}
-      <div className="mt-6 px-4 space-y-5">
+      <div className="mt-3 px-4 space-y-5">
         {Object.keys(grouped).length === 0 ? (
           <div className="text-center py-12">
             <Camera size={40} className="mx-auto text-gray-300 mb-3" />
@@ -294,6 +311,10 @@ export default function SiteDetail() {
           Object.entries(grouped).map(([catId, catPoints]) => {
             const cat = getCategoryById(catId);
             const IconComponent = ICON_MAP[cat?.icon] || Package;
+            const visiblePoints = photoFilter
+              ? catPoints.filter((p) => !p.photo_count || p.photo_count === 0)
+              : catPoints;
+            if (visiblePoints.length === 0) return null;
 
             return (
               <div key={catId}>
@@ -305,11 +326,11 @@ export default function SiteDetail() {
                     <IconComponent size={15} style={{ color: cat?.color || '#64748b' }} />
                   </div>
                   <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 flex-1">{cat?.name || catId}</h3>
-                  <span className="text-xs text-gray-400 font-medium">{catPoints.length}</span>
+                  <span className="text-xs text-gray-400 font-medium">{visiblePoints.length}</span>
                 </div>
 
                 <div className="space-y-2">
-                  {catPoints.map((point) => (
+                  {visiblePoints.map((point) => (
                     <Link
                       key={point.id}
                       to={`/sites/${siteId}/points/${point.id}`}

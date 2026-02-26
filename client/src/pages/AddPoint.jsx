@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { api } from '../utils/api';
 import { compressImages } from '../utils/imageCompress';
-import { CATEGORIES, getCategoryById, PHOTO_TYPES, getSubcategoryName } from '../utils/verkada';
+import { CATEGORIES, getCategoryById, PHOTO_TYPES, getSubcategoryName, getModelsForSubcategory, getAccessoriesForModel } from '../utils/verkada';
 import VoiceNote from '../components/VoiceNote';
 
 const DIFFICULTY_LABELS = [
@@ -30,6 +30,7 @@ export default function AddPoint() {
   const fileInputRef = useRef(null);
 
   const [step, setStep] = useState(1); // 1: category, 2: subcategory, 3: details
+  const [quickAdd, setQuickAdd] = useState(false);
   const [saving, setSaving] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [sitePoints, setSitePoints] = useState([]);
@@ -43,6 +44,7 @@ export default function AddPoint() {
     floor: '',
     notes: '',
     product_model: '',
+    accessories: [],
     install_difficulty: null,
     idf_point_id: null,
     cable_type: '',
@@ -71,8 +73,17 @@ export default function AddPoint() {
   }
 
   function handleSubcategorySelect(subId) {
-    setForm((prev) => ({ ...prev, subcategory: subId }));
+    setForm((prev) => ({ ...prev, subcategory: subId, product_model: '', accessories: [] }));
     setStep(3);
+  }
+
+  function toggleAccessory(accId) {
+    setForm((prev) => ({
+      ...prev,
+      accessories: prev.accessories.includes(accId)
+        ? prev.accessories.filter((a) => a !== accId)
+        : [...prev.accessories, accId],
+    }));
   }
 
   function handlePhotoCapture(e) {
@@ -102,6 +113,42 @@ export default function AddPoint() {
     });
   }
 
+  async function handleQuickSave() {
+    if (!form.location_description && !form.name) {
+      alert('Please enter a location or name.');
+      return;
+    }
+    setSaving(true);
+    try {
+      await api.createPoint(siteId, {
+        category: selectedCategory,
+        ...form,
+        accessories: form.accessories.join(', '),
+      });
+      // Reset for next quick add, stay on step 2
+      setForm({
+        subcategory: form.subcategory,
+        name: '',
+        location_description: '',
+        floor: form.floor,
+        notes: '',
+        product_model: form.product_model,
+        accessories: form.accessories,
+        install_difficulty: null,
+        idf_point_id: null,
+        cable_type: '',
+        cable_length: '',
+        is_flagged: false,
+        flag_notes: '',
+      });
+      setStep(2);
+    } catch (err) {
+      alert('Failed to save: ' + err.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
     setSaving(true);
@@ -110,6 +157,7 @@ export default function AddPoint() {
       const point = await api.createPoint(siteId, {
         category: selectedCategory,
         ...form,
+        accessories: form.accessories.join(', '),
       });
 
       // Upload photos if any, grouped by type
@@ -156,9 +204,26 @@ export default function AddPoint() {
           <ArrowLeft size={22} />
         </button>
         <h1 className="text-lg font-bold flex-1">
-          {step === 1 ? 'Select Category' : step === 2 ? 'Select Type' : 'Add Details'}
+          {step === 1 ? 'Add Device' : step === 2 ? 'Select Type' : quickAdd ? 'Quick Add' : 'Add Details'}
         </h1>
+        {/* Quick Add toggle */}
+        <button
+          onClick={() => setQuickAdd((v) => !v)}
+          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+            quickAdd
+              ? 'bg-blue-600 text-white shadow'
+              : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
+          }`}
+        >
+          {quickAdd ? '⚡ Quick' : 'Quick'}
+        </button>
       </div>
+      {/* Quick Add mode banner */}
+      {quickAdd && step === 1 && (
+        <div className="mx-4 mt-2 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 px-3 py-2">
+          <p className="text-xs text-blue-700 dark:text-blue-400"><span className="font-bold">⚡ Quick Add mode:</span> Log location only — skip photos &amp; details. Complete them on your detailed walkthrough.</p>
+        </div>
+      )}
 
       {/* Step 1: Category Selection */}
       {step === 1 && (
@@ -265,25 +330,92 @@ export default function AddPoint() {
               <input
                 type="text"
                 className="input-field"
-                placeholder="e.g. 1st Floor, Bldg A"
+                placeholder="e.g. 1st Floor"
                 value={form.floor}
                 onChange={(e) => updateField('floor', e.target.value)}
               />
             </div>
-            <div>
-              <label className="label">Product Model</label>
-              <input
-                type="text"
-                className="input-field"
-                placeholder="e.g. CD52, AD15"
-                value={form.product_model}
-                onChange={(e) => updateField('product_model', e.target.value)}
-              />
-            </div>
+            {quickAdd && (
+              <div>
+                <label className="label">Flag</label>
+                <label className="flex items-center gap-2 h-10 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 rounded accent-amber-500"
+                    checked={form.is_flagged}
+                    onChange={(e) => updateField('is_flagged', e.target.checked)}
+                  />
+                  <Flag size={14} className="text-amber-500" />
+                  <span className="text-sm text-amber-700 dark:text-amber-400 font-medium">Flag</span>
+                </label>
+              </div>
+            )}
+          </div>
+
+          {/* Model picker — full width */}
+          <div>
+            <label className="label">Product Model</label>
+            {(() => {
+              const models = getModelsForSubcategory(form.subcategory);
+              if (models.length > 0) {
+                const accessories = getAccessoriesForModel(form.subcategory, form.product_model);
+                return (
+                  <div className="space-y-2">
+                    <select
+                      className="input-field"
+                      value={form.product_model}
+                      onChange={(e) => { updateField('product_model', e.target.value); updateField('accessories', []); }}
+                    >
+                      <option value="">— Select model —</option>
+                      {models.map((m) => (
+                        <option key={m.model} value={m.model}>{m.name}</option>
+                      ))}
+                      <option value="__other__">Other / Unlisted</option>
+                    </select>
+                    {form.product_model === '__other__' && (
+                      <input
+                        type="text"
+                        className="input-field"
+                        placeholder="Enter model number"
+                        value={form.product_model_custom || ''}
+                        onChange={(e) => updateField('product_model_custom', e.target.value)}
+                      />
+                    )}
+                    {accessories.length > 0 && (
+                      <div className="rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-3">
+                        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">Accessories / Mounts</p>
+                        <div className="grid grid-cols-2 gap-1.5">
+                          {accessories.map((acc) => (
+                            <label key={acc.id} className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                className="w-4 h-4 rounded accent-blue-500"
+                                checked={form.accessories.includes(acc.id)}
+                                onChange={() => toggleAccessory(acc.id)}
+                              />
+                              <span className="text-sm text-gray-700 dark:text-gray-300">{acc.name}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+              return (
+                <input
+                  type="text"
+                  className="input-field"
+                  placeholder="e.g. CD52, BV41"
+                  value={form.product_model}
+                  onChange={(e) => updateField('product_model', e.target.value)}
+                />
+              );
+            })()}
           </div>
 
           {/* Installation Difficulty — only for non-IDF categories */}
-          {selectedCategory && !IDF_CATEGORIES.includes(selectedCategory) && (
+          {!quickAdd && selectedCategory && !IDF_CATEGORIES.includes(selectedCategory) && (
             <div>
               <label className="label">Install Difficulty</label>
               <div className="flex gap-1.5">
@@ -311,7 +443,7 @@ export default function AddPoint() {
           )}
 
           {/* IDF/MDF Link — only for non-network categories */}
-          {selectedCategory && !IDF_CATEGORIES.includes(selectedCategory) && (
+          {!quickAdd && selectedCategory && !IDF_CATEGORIES.includes(selectedCategory) && (
             <div>
               <label className="label">Network Closet (IDF/MDF)</label>
               <select
@@ -334,7 +466,7 @@ export default function AddPoint() {
           )}
 
           {/* Cable Run — only for non-IDF */}
-          {selectedCategory && !IDF_CATEGORIES.includes(selectedCategory) && (
+          {!quickAdd && selectedCategory && !IDF_CATEGORIES.includes(selectedCategory) && (
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="label">Cable Type</label>
@@ -372,45 +504,49 @@ export default function AddPoint() {
             </div>
           )}
 
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="label mb-0">Notes</label>
-              <VoiceNote onTranscript={handleVoiceTranscript} />
-            </div>
-            <textarea
-              className="input-field min-h-[80px] resize-none"
-              placeholder="Notes about this location..."
-              value={form.notes}
-              onChange={(e) => updateField('notes', e.target.value)}
-              rows={3}
-            />
-          </div>
-
-          {/* Device Flag */}
-          <div className="rounded-xl border-2 border-dashed border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 p-3 space-y-2">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                className="w-4 h-4 rounded accent-amber-500"
-                checked={form.is_flagged}
-                onChange={(e) => updateField('is_flagged', e.target.checked)}
-              />
-              <Flag size={15} className="text-amber-500" />
-              <span className="text-sm font-semibold text-amber-700 dark:text-amber-400">Flag this device</span>
-            </label>
-            {form.is_flagged && (
+          {!quickAdd && (
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="label mb-0">Notes</label>
+                <VoiceNote onTranscript={handleVoiceTranscript} />
+              </div>
               <textarea
-                className="input-field min-h-[70px] resize-none text-sm border-amber-300 dark:border-amber-700"
-                placeholder="Describe what needs attention before install (e.g. power needed, strike plate replacement)..."
-                value={form.flag_notes}
-                onChange={(e) => updateField('flag_notes', e.target.value)}
-                rows={2}
+                className="input-field min-h-[80px] resize-none"
+                placeholder="Notes about this location..."
+                value={form.notes}
+                onChange={(e) => updateField('notes', e.target.value)}
+                rows={3}
               />
-            )}
-          </div>
+            </div>
+          )}
 
-          {/* Photo Capture Section */}
-          <div>
+          {/* Device Flag — full block only in detailed mode; quick toggle is in grid above */}
+          {!quickAdd && (
+            <div className="rounded-xl border-2 border-dashed border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 p-3 space-y-2">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="w-4 h-4 rounded accent-amber-500"
+                  checked={form.is_flagged}
+                  onChange={(e) => updateField('is_flagged', e.target.checked)}
+                />
+                <Flag size={15} className="text-amber-500" />
+                <span className="text-sm font-semibold text-amber-700 dark:text-amber-400">Flag this device</span>
+              </label>
+              {form.is_flagged && (
+                <textarea
+                  className="input-field min-h-[70px] resize-none text-sm border-amber-300 dark:border-amber-700"
+                  placeholder="Describe what needs attention before install..."
+                  value={form.flag_notes}
+                  onChange={(e) => updateField('flag_notes', e.target.value)}
+                  rows={2}
+                />
+              )}
+            </div>
+          )}
+
+          {/* Photo Capture Section — hidden in quick add mode */}
+          {!quickAdd && <div>
             <label className="label">Photos</label>
             <div className="flex flex-wrap gap-2">
               {photos.map((photo, i) => (
@@ -444,12 +580,33 @@ export default function AddPoint() {
               className="hidden"
             />
             <p className="text-xs text-gray-400 mt-1">Tap to take a photo or choose from gallery</p>
-          </div>
+          </div>}
 
-          <button type="submit" disabled={saving} className="btn-primary w-full mt-6">
-            {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-            {saving ? 'Saving...' : 'Save Inspection Point'}
-          </button>
+          {quickAdd ? (
+            <div className="flex gap-3 mt-4">
+              <button
+                type="button"
+                onClick={handleQuickSave}
+                disabled={saving}
+                className="btn-primary flex-1"
+              >
+                {saving ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />}
+                {saving ? 'Saving...' : 'Save + Add Another'}
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate(`/sites/${siteId}`)}
+                className="btn-secondary px-4"
+              >
+                Done
+              </button>
+            </div>
+          ) : (
+            <button type="submit" disabled={saving} className="btn-primary w-full mt-6">
+              {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+              {saving ? 'Saving...' : 'Save Inspection Point'}
+            </button>
+          )}
         </form>
       )}
 
