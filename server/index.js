@@ -19,6 +19,7 @@ app.use(express.json({ limit: '50mb' }));
 app.use('/api/sites', require('./routes/sites'));
 app.use('/api/points', require('./routes/points'));
 app.use('/api/photos', require('./routes/photos'));
+app.use('/api/archive', require('./routes/archive'));
 
 // Serve uploaded files
 app.use('/uploads', express.static(uploadsDir));

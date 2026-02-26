@@ -6,6 +6,7 @@ import {
   Monitor, Users, Package, Flag, Cable
 } from 'lucide-react';
 import { api } from '../utils/api';
+import { compressImages } from '../utils/imageCompress';
 import { CATEGORIES, getCategoryById, PHOTO_TYPES, getSubcategoryName } from '../utils/verkada';
 import VoiceNote from '../components/VoiceNote';
 
@@ -82,14 +83,16 @@ export default function AddPoint() {
     setPendingFiles(files);
   }
 
-  function handleConfirmPhotos() {
-    const newPhotos = pendingFiles.map((file) => ({
+  async function handleConfirmPhotos() {
+    const filesToAdd = pendingFiles;
+    setPendingFiles(null);
+    const compressed = await compressImages(filesToAdd);
+    const newPhotos = compressed.map((file) => ({
       file,
       preview: URL.createObjectURL(file),
       type: pendingType,
     }));
     setPhotos((prev) => [...prev, ...newPhotos]);
-    setPendingFiles(null);
   }
 
   function removePhoto(index) {

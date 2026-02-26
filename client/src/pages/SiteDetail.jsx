@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   ArrowLeft, Plus, Edit, FileText, MapPin, Phone, Mail, User,
   Camera, DoorOpen, Radio, ShieldAlert, Thermometer, Server,
-  Monitor, Users, Package, ChevronRight, Image, Link2, Map
+  Monitor, Users, Package, ChevronRight, Image, Link2, Map, Archive, Loader2
 } from 'lucide-react';
 import { api } from '../utils/api';
 import { CATEGORIES, getCategoryById, getSubcategoryName } from '../utils/verkada';
@@ -23,6 +23,29 @@ export default function SiteDetail() {
   const [site, setSite] = useState(null);
   const [points, setPoints] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [archiving, setArchiving] = useState(false);
+
+  async function handleArchive() {
+    setArchiving(true);
+    try {
+      const res = await fetch(`/api/archive/${siteId}`);
+      if (!res.ok) throw new Error('Archive failed');
+      const blob = await res.blob();
+      const disposition = res.headers.get('Content-Disposition') || '';
+      const nameMatch = disposition.match(/filename="([^"]+)"/);
+      const filename = nameMatch ? nameMatch[1] : `site-archive-${siteId}.zip`;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert('Archive download failed: ' + err.message);
+    } finally {
+      setArchiving(false);
+    }
+  }
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
 
@@ -146,6 +169,9 @@ export default function SiteDetail() {
         <div className="flex-1 min-w-0">
           <h1 className="text-lg font-bold truncate">{site.name}</h1>
         </div>
+        <button onClick={handleArchive} disabled={archiving} className="p-1 text-gray-400" title="Download archive">
+          {archiving ? <Loader2 size={20} className="animate-spin" /> : <Archive size={20} />}
+        </button>
         <Link to={`/sites/${siteId}/edit`} className="p-1">
           <Edit size={20} />
         </Link>

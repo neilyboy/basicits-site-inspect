@@ -6,6 +6,8 @@ import {
   Monitor, Users, Package, MapPin, Layers, Tag, FileText, Link2, Flag, Cable
 } from 'lucide-react';
 import { api } from '../utils/api';
+import { compressImages } from '../utils/imageCompress';
+import { queueUpload, flushQueue, getQueueCount } from '../utils/uploadQueue';
 import { getCategoryById, getSubcategoryName, PHOTO_TYPES, getPhotoTypeName } from '../utils/verkada';
 import VoiceNote from '../components/VoiceNote';
 
@@ -38,10 +40,29 @@ export default function PointDetail() {
   const [showOriginal, setShowOriginal] = useState(false);
   const [pendingFiles, setPendingFiles] = useState(null);
   const [pendingType, setPendingType] = useState('general');
+  const [queuedCount, setQueuedCount] = useState(0);
+  const [flushing, setFlushing] = useState(false);
 
   useEffect(() => {
     loadPoint();
+    getQueueCount().then(setQueuedCount).catch(() => {});
   }, [pointId]);
+
+  useEffect(() => {
+    async function handleOnline() {
+      const count = await getQueueCount().catch(() => 0);
+      if (count === 0) return;
+      setFlushing(true);
+      const result = await flushQueue(api.uploadPhotos).catch(() => ({ succeeded: 0, failed: count }));
+      setFlushing(false);
+      if (result.succeeded > 0) {
+        await loadPoint();
+        getQueueCount().then(setQueuedCount);
+      }
+    }
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, []);
 
   async function loadPoint() {
     try {
@@ -101,13 +122,21 @@ export default function PointDetail() {
   async function handleConfirmUpload() {
     if (!pendingFiles) return;
     setUploading(true);
+    const filesToUpload = pendingFiles;
+    const typeToUpload = pendingType;
     setPendingFiles(null);
     try {
-      const formData = new FormData();
-      pendingFiles.forEach((f) => formData.append('photos', f));
-      formData.append('photo_type', pendingType);
-      await api.uploadPhotos(pointId, formData);
-      await loadPoint();
+      const compressed = await compressImages(filesToUpload);
+      if (!navigator.onLine) {
+        await queueUpload(pointId, typeToUpload, compressed);
+        setQueuedCount((c) => c + 1);
+      } else {
+        const formData = new FormData();
+        compressed.forEach((f) => formData.append('photos', f));
+        formData.append('photo_type', typeToUpload);
+        await api.uploadPhotos(pointId, formData);
+        await loadPoint();
+      }
     } catch (err) {
       alert('Failed to upload: ' + err.message);
     } finally {
@@ -446,6 +475,16 @@ export default function PointDetail() {
               )}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Offline queue banner */}
+      {(queuedCount > 0 || flushing) && (
+        <div className="mx-4 mt-3 rounded-xl bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 px-3 py-2 flex items-center gap-2">
+          {flushing
+            ? <><Loader2 size={14} className="animate-spin text-amber-500" /><span className="text-sm text-amber-700 dark:text-amber-400">Uploading queued photos...</span></>
+            : <><Camera size={14} className="text-amber-500" /><span className="text-sm text-amber-700 dark:text-amber-400">{queuedCount} photo{queuedCount !== 1 ? 's' : ''} queued — will upload when back online</span></>
+          }
         </div>
       )}
 
