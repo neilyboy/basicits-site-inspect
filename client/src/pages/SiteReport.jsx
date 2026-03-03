@@ -54,7 +54,7 @@ export default function SiteReport() {
   }
 
   function handlePrint() {
-    window.print();
+    handleExportPDF();
   }
 
   if (loading) {
