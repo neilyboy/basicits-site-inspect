@@ -1,133 +1,116 @@
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+
+// A4 page dimensions in mm
+const PAGE_W_MM = 210;
+const PAGE_H_MM = 297;
+const MARGIN_MM = 14; // top/bottom/left/right margin
+
+const CONTENT_W_MM = PAGE_W_MM - MARGIN_MM * 2;
+const CONTENT_H_MM = PAGE_H_MM - MARGIN_MM * 2;
+
 /**
- * generatePDF — opens a browser print dialog pre-filled with the report HTML.
- * All images are converted to base64 data URLs so they load correctly in the
- * print window (relative /uploads/ paths don't resolve there).
- * Users choose "Save as PDF" in the browser print dialog.
+ * Render a single DOM element to a canvas image.
+ */
+async function renderBlock(el) {
+  return html2canvas(el, {
+    scale: 2,
+    useCORS: true,
+    allowTaint: true,
+    logging: false,
+    backgroundColor: '#ffffff',
+  });
+}
+
+/**
+ * generatePDF — captures each logical block individually and places them
+ * sequentially in the PDF. A new page is started before any block that
+ * would not fit in the remaining space, so nothing is ever sliced mid-content.
+ * The file downloads directly with no print dialog.
  */
 export async function generatePDF(data, element) {
   const { site } = data;
   const filename = `Site_Inspect_${site.name.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
 
-  // ── 1. Collect stylesheet text ─────────────────────────────────────────────
-  const styleSheets = Array.from(document.styleSheets)
-    .map((sheet) => {
-      try {
-        return Array.from(sheet.cssRules).map((r) => r.cssText).join('\n');
-      } catch {
-        return '';
+  const pdf = new jsPDF('p', 'mm', 'a4');
+
+  // Collect the blocks we want to render in order.
+  // Strategy: render the report header + intro sections as one block,
+  // then each .point-block individually so photos never get cut.
+  const blocks = [];
+
+  // Everything above the point-by-point detail (header, summaries, category headers)
+  // We capture the whole container minus point-blocks first, then each point-block.
+  // Simplest reliable approach: capture each direct child section of the report wrapper.
+  const wrapper = element;
+
+  // Get all immediate children of the report wrapper
+  const children = Array.from(wrapper.children);
+
+  for (const child of children) {
+    // Skip the sticky top bar
+    if (child.classList.contains('no-print')) continue;
+
+    // For category sections, split further: capture category header + each point-block separately
+    const pointBlocks = child.querySelectorAll('.point-block');
+    const categoryHeader = child.querySelector('.category-header');
+
+    if (pointBlocks.length > 0) {
+      // Render category header alone
+      if (categoryHeader) {
+        blocks.push(categoryHeader);
       }
-    })
-    .join('\n');
-
-  // ── 2. Clone the element so we can mutate it without touching the live DOM ──
-  const clone = element.cloneNode(true);
-
-  // ── 3. Convert every img src to an absolute URL, then fetch as base64 ───────
-  const imgs = Array.from(clone.querySelectorAll('img'));
-
-  await Promise.all(
-    imgs.map(async (img) => {
-      try {
-        // Make relative paths absolute (e.g. /uploads/foo.jpg → http://host/uploads/foo.jpg)
-        const absoluteSrc = new URL(img.getAttribute('src') || '', window.location.origin).href;
-
-        const response = await fetch(absoluteSrc);
-        const blob = await response.blob();
-        const dataUrl = await new Promise((res, rej) => {
-          const reader = new FileReader();
-          reader.onload = () => res(reader.result);
-          reader.onerror = rej;
-          reader.readAsDataURL(blob);
-        });
-
-        img.src = dataUrl;
-        // Remove lazy loading so the print window renders immediately
-        img.removeAttribute('loading');
-      } catch {
-        // If a single image fails, continue — don't abort the whole export
+      // Render each point block individually
+      for (const pb of pointBlocks) {
+        blocks.push(pb);
       }
-    }),
-  );
-
-  // ── 4. Open print window ───────────────────────────────────────────────────
-  const printWindow = window.open('', '_blank', 'width=960,height=700');
-  if (!printWindow) {
-    alert('Pop-up blocked — please allow pop-ups for this site and try again.');
-    return;
+    } else {
+      // Render the whole section as one block (header, summaries, etc.)
+      blocks.push(child);
+    }
   }
 
-  printWindow.document.write(`<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <title>${filename}</title>
-  <style>
-    ${styleSheets}
+  let cursorY = MARGIN_MM; // current Y position on the active page
+  let firstBlock = true;
 
-    /* ── Print layout overrides ── */
-    @media print {
-      .no-print { display: none !important; }
+  for (const block of blocks) {
+    // Skip invisible / zero-height elements
+    const rect = block.getBoundingClientRect();
+    if (rect.height < 2) continue;
 
-      @page {
-        size: A4 portrait;
-        margin: 18mm 16mm 18mm 16mm;
-      }
+    const canvas = await renderBlock(block);
 
-      body {
-        margin: 0;
-        padding: 0;
-        background: white;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-        color-adjust: exact;
-      }
+    // Scale the canvas so it fits the content width
+    const ratio = CONTENT_W_MM / canvas.width;
+    const blockH = canvas.height * ratio;
 
-      .min-h-screen { min-height: unset !important; }
+    // If this block is taller than a full page, we still render it (scaled to fit)
+    // to avoid infinite loops — but normally blocks are smaller than a page.
+    const fitsOnOnePage = blockH <= CONTENT_H_MM;
 
-      /* Never split device blocks, photo grids, cards, or tables */
-      .point-block,
-      .photo-grid,
-      .photo-card,
-      .summary-block,
-      .flags-block {
-        page-break-inside: avoid;
-        break-inside: avoid;
-      }
-
-      /* Category header keeps its first item on the same page */
-      .category-header {
-        page-break-after: avoid;
-        break-after: avoid;
-      }
-
-      img {
-        max-width: 100% !important;
-        page-break-inside: avoid;
-        break-inside: avoid;
-        display: block;
-      }
-
-      table { page-break-inside: avoid; break-inside: avoid; }
-      tr    { page-break-inside: avoid; break-inside: avoid; }
+    // Start a new page if the block won't fit in the remaining space
+    if (!firstBlock && cursorY + blockH > PAGE_H_MM - MARGIN_MM) {
+      pdf.addPage();
+      cursorY = MARGIN_MM;
     }
 
-    /* Screen view in the print window — also hide nav bar */
-    .no-print { display: none !important; }
-  </style>
-</head>
-<body>
-  ${clone.outerHTML}
-</body>
-</html>`);
+    const imgData = canvas.toDataURL('image/jpeg', 0.88);
 
-  printWindow.document.close();
+    if (fitsOnOnePage) {
+      pdf.addImage(imgData, 'JPEG', MARGIN_MM, cursorY, CONTENT_W_MM, blockH);
+      cursorY += blockH + 2; // 2mm gap between blocks
+    } else {
+      // Block is taller than one page — render across pages without splitting
+      // (scale it to fit height, reducing width proportionally)
+      const scaleH = CONTENT_H_MM / blockH;
+      const scaledW = CONTENT_W_MM * scaleH;
+      const offsetX = MARGIN_MM + (CONTENT_W_MM - scaledW) / 2;
+      pdf.addImage(imgData, 'JPEG', offsetX, cursorY, scaledW, CONTENT_H_MM);
+      cursorY += CONTENT_H_MM + 2;
+    }
 
-  // ── 5. Trigger print once the window has fully rendered ───────────────────
-  // Use a longer delay to ensure base64 images are decoded and laid out
-  printWindow.onload = () => {
-    setTimeout(() => {
-      printWindow.focus();
-      printWindow.print();
-    }, 1200);
-  };
+    firstBlock = false;
+  }
+
+  pdf.save(filename);
 }
