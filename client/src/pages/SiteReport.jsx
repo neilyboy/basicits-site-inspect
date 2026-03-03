@@ -209,7 +209,7 @@ export default function SiteReport() {
 
         {/* Flagged Devices Summary */}
         {flaggedPoints.length > 0 && (
-          <div className="p-6 border-b border-red-200 bg-red-50">
+          <div className="flags-block p-6 border-b border-red-200 bg-red-50">
             <h2 className="text-sm font-bold text-red-700 uppercase tracking-wider mb-3 flex items-center gap-2">
               <Flag size={14} /> {flaggedPoints.length} Device{flaggedPoints.length !== 1 ? 's' : ''} Require Attention Before Install
             </h2>
@@ -243,7 +243,7 @@ export default function SiteReport() {
 
         {/* Cable Materials Summary */}
         {hasCableData && (
-          <div className="p-6 border-b border-gray-200">
+          <div className="summary-block p-6 border-b border-gray-200">
             <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
               <Cable size={13} /> Cable Materials Required
             </h2>
@@ -297,7 +297,7 @@ export default function SiteReport() {
           if (modelRows.length === 0) return null;
 
           return (
-            <div className="p-6 border-b-4 border-blue-600 bg-blue-50">
+            <div className="summary-block p-6 border-b-4 border-blue-600 bg-blue-50">
               <h2 className="text-sm font-bold text-blue-800 uppercase tracking-wider mb-4 flex items-center gap-2">
                 <Tag size={14} /> Equipment Quote Summary
               </h2>
@@ -357,7 +357,7 @@ export default function SiteReport() {
         })()}
 
         {/* Summary Table */}
-        <div className="p-6 border-b border-gray-200">
+        <div className="summary-block p-6 border-b border-gray-200">
           <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3">Summary</h2>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -402,10 +402,10 @@ export default function SiteReport() {
           const IconComponent = ICON_MAP[cat?.icon] || Package;
 
           return (
-            <div key={catId} className="border-b border-gray-200">
+            <div key={catId} className="border-b border-gray-200" style={{pageBreakBefore: 'auto'}}>
               {/* Category Header */}
               <div
-                className="px-6 py-4 flex items-center gap-3"
+                className="category-header px-6 py-4 flex items-center gap-3"
                 style={{ borderLeft: `4px solid ${cat?.color || '#64748b'}` }}
               >
                 <div
@@ -422,7 +422,7 @@ export default function SiteReport() {
 
               {/* Points in this category */}
               {catPoints.map((point, idx) => (
-                <div key={point.id} className="px-6 py-4 border-t border-gray-100">
+                <div key={point.id} className="point-block px-6 py-4 border-t border-gray-100">
                   <div className="flex items-start justify-between mb-2">
                     <div>
                       <h3 className="font-semibold text-gray-800">
@@ -511,9 +511,9 @@ export default function SiteReport() {
 
                   {/* Photos Grid */}
                   {point.photos && point.photos.length > 0 && (
-                    <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-2">
+                    <div className="photo-grid mt-3 grid grid-cols-2 md:grid-cols-3 gap-2">
                       {point.photos.map((photo) => (
-                        <div key={photo.id} className="rounded-lg overflow-hidden border border-gray-200">
+                        <div key={photo.id} className="photo-card rounded-lg overflow-hidden border border-gray-200">
                           <img
                             src={`/uploads/${photo.thumbnail || photo.filename}`}
                             alt=""
